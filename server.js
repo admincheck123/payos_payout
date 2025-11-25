@@ -122,6 +122,16 @@ async function getBankcodesEither() {
     }
 }
 
+
+app.get("/api/my-ip", async (req, res) => {
+    try {
+        const r = await axios.get("https://api.ipify.org?format=json");
+        res.json({ ip: r.data.ip });
+    } catch (err) {
+        res.status(500).json({ error: "Không lấy được IP" });
+    }
+});
+
 // ---------- vietqr.io banks (new) ----------
 let vietqrCache = { ts: 0, ttl: 1000 * 60 * 60 * 6, data: null }; // cache 6 hours
 app.get("/api/vietqr-banks", async (req, res) => {
