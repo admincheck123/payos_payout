@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ví chuyển tiền — Demo PayOS</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+    <header class="nav">
+        <div class="nav-left">
+            <div class="logo">💸</div>
+            <div class="brand-text">
+                <div class="app-title">Ví Chuyển Tiền</div>
+                <div class="app-sub muted">Kết nối PayOS</div>
+            </div>
+        </div>
+        <nav class="nav-right">
+            <button id="navHome" class="nav-btn active">Trang chủ</button>
+            <button id="navHistory" class="nav-btn">Lịch sử chuyển tiền</button>
+        </nav>
+    </header>
+
+    <main class="page">
+        <!-- Home page -->
+        <section id="pageHome" class="page-section active">
+            <aside class="sidebar">
+                <div class="wallet">
+                    <div class="wallet-title">Số dư ví</div>
+                    <div id="balance" class="wallet-value">--</div>
+                    <button id="refreshBalance" class="btn small">Làm mới</button>
+                </div>
+                <footer class="sidebar-foot">CHECKSUM_KEY lưu trên server. Không lộ ra client.</footer>
+            </aside>
+
+            <section class="main">
+                <div class="card form-card">
+                    <h2>Tạo lệnh chuyển tiền</h2>
+                    <form id="payoutForm" class="form">
+                        <label>Reference ID
+                            <input id="referenceId" name="referenceId" required />
+                        </label>
+
+                        <div class="row">
+                            <label>Số tiền (VND)
+                                <input id="amount" name="amount" type="number" min="1000" required />
+                            </label>
+
+                            <label>Loại (category)
+                                <input id="category" name="category" placeholder="salary" />
+                            </label>
+                        </div>
+
+                        <label>Mô tả
+                            <input id="description" name="description" placeholder="Thanh toán lương, thưởng..." />
+                        </label>
+
+                        <div class="row">
+                            <label style="flex:1">
+                                Ngân hàng (tìm & chọn)
+                                <div class="bank-select-row">
+                                    <input id="bankSearch" placeholder="Gõ tên ngân hàng để tìm..."
+                                        autocomplete="off" />
+                                    <div id="selectedBank" class="selected-bank hidden"></div>
+                                </div>
+                                <div id="bankDropdown" class="bank-dropdown hidden"></div>
+                                <input id="toBin" name="toBin" type="hidden" required />
+                            </label>
+
+                            <label>Số tài khoản (toAccountNumber)
+                                <input id="toAccountNumber" name="toAccountNumber" required />
+                            </label>
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" class="btn">Gửi lệnh</button>
+                            <button id="clearBtn" type="button" class="btn ghost">Xóa form</button>
+                        </div>
+                    </form>
+
+                    <div class="result-wrap">
+                        <h3>Kết quả</h3>
+                        <div id="resultCard" class="result-card">
+                            <div id="result" class="result">Chưa có hành động</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- History page -->
+        <section id="pageHistory" class="page-section">
+            <div class="history-card">
+                <div class="history-head">
+                    <h2>Lịch sử chuyển tiền</h2>
+                    <div class="history-controls">
+                        <input id="historySearch" placeholder="Tìm theo referenceId hoặc account..." />
+                        <button id="historyRefresh" class="btn small">Làm mới</button>
+                    </div>
+                </div>
+
+                <div class="history-table-wrap">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Mã lô / ID</th>
+                                <th>Reference</th>
+                                <th>Số tiền</th>
+                                <th>Người nhận</th>
+                                <th>Ngân hàng (BIN)</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="7" class="muted">Chưa có dữ liệu</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" style="margin-top:12px;">
+                    <button id="historyPrev" class="btn ghost small">Trước</button>
+                    <div id="historyPageInfo" class="page-info">Trang 1 / 1</div>
+                    <button id="historyNext" class="btn ghost small">Sau</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- toast -->
+    <div id="toast" class="toast hidden">
+        <div id="toastIcon" class="toast-icon"></div>
+        <div id="toastMsg" class="toast-msg"></div>
+        <button id="toastClose" class="toast-close" aria-label="close">✕</button>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>

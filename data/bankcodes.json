@@ -1,0 +1,98 @@
+[
+    {
+        "shortName": "Vietcombank",
+        "bin": "970422"
+    },
+    {
+        "shortName": "VietinBank",
+        "bin": "970436"
+    },
+    {
+        "shortName": "BIDV",
+        "bin": "970410"
+    },
+    {
+        "shortName": "Techcombank",
+        "bin": "970415"
+    },
+    {
+        "shortName": "ACB",
+        "bin": "970418"
+    },
+    {
+        "shortName": "MB Bank",
+        "bin": "970428"
+    },
+    {
+        "shortName": "Sacombank",
+        "bin": "970419"
+    },
+    {
+        "shortName": "TPBank",
+        "bin": "970430"
+    },
+    {
+        "shortName": "VPBank",
+        "bin": "970421"
+    },
+    {
+        "shortName": "SHB",
+        "bin": "970425"
+    },
+    {
+        "shortName": "SCB",
+        "bin": "970423"
+    },
+    {
+        "shortName": "VIB",
+        "bin": "970427"
+    },
+    {
+        "shortName": "Agribank",
+        "bin": "970400"
+    },
+    {
+        "shortName": "HSBC VN",
+        "bin": "970440"
+    },
+    {
+        "shortName": "OceanBank",
+        "bin": "970433"
+    },
+    {
+        "shortName": "SeABank",
+        "bin": "970424"
+    },
+    {
+        "shortName": "MSB",
+        "bin": "970429"
+    },
+    {
+        "shortName": "Eximbank",
+        "bin": "970413"
+    },
+    {
+        "shortName": "KienLongBank",
+        "bin": "970432"
+    },
+    {
+        "shortName": "Nam A Bank",
+        "bin": "970434"
+    },
+    {
+        "shortName": "PVcomBank",
+        "bin": "970435"
+    },
+    {
+        "shortName": "OCB",
+        "bin": "970426"
+    },
+    {
+        "shortName": "LienVietPostBank",
+        "bin": "970431"
+    },
+    {
+        "shortName": "NCB",
+        "bin": "970412"
+    }
+]
