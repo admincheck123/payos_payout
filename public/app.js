@@ -1,4 +1,6 @@
 // public/app.js
+// Lightweight, modern, and robust client JS for the demo app
+
 // DOM
 const navHome = document.getElementById("navHome");
 const navHistory = document.getElementById("navHistory");
@@ -8,16 +10,23 @@ const pageHistory = document.getElementById("pageHistory");
 // Home elements
 const balanceEl = document.getElementById("balance");
 const refreshBalanceBtn = document.getElementById("refreshBalance");
+const copyBalanceBtn = document.getElementById("copyBalance");
+
 const payoutForm = document.getElementById("payoutForm");
-const referenceIdEl = document.getElementById("referenceId");
+const referenceIdHidden = document.getElementById("referenceId"); // hidden input (will be submitted)
+const referenceDisplay = document.getElementById("referenceDisplay"); // visible readonly display
+const copyRefBtn = document.getElementById("copyRef");
+
 const amountEl = document.getElementById("amount");
 const categoryEl = document.getElementById("category");
 const descriptionEl = document.getElementById("description");
+
 const bankSearchEl = document.getElementById("bankSearch");
 const bankDropdownEl = document.getElementById("bankDropdown");
 const selectedBankEl = document.getElementById("selectedBank");
 const toBinEl = document.getElementById("toBin");
 const accountEl = document.getElementById("toAccountNumber");
+
 const clearBtn = document.getElementById("clearBtn");
 const resultEl = document.getElementById("result");
 
@@ -64,13 +73,13 @@ function showPage(name) {
     if (name === 'home') {
         pageHome.classList.add('active');
         pageHistory.classList.remove('active');
-        navHome.classList.add('active');
-        navHistory.classList.remove('active');
+        navHome.classList.add('active'); navHome.setAttribute('aria-pressed', 'true');
+        navHistory.classList.remove('active'); navHistory.setAttribute('aria-pressed', 'false');
     } else {
         pageHome.classList.remove('active');
         pageHistory.classList.add('active');
-        navHome.classList.remove('active');
-        navHistory.classList.add('active');
+        navHome.classList.remove('active'); navHome.setAttribute('aria-pressed', 'false');
+        navHistory.classList.add('active'); navHistory.setAttribute('aria-pressed', 'true');
     }
 }
 navHome.addEventListener('click', () => showPage('home'));
@@ -81,6 +90,7 @@ async function fetchBalance() {
     balanceEl.textContent = 'Đang tải...';
     try {
         const r = await fetch('/api/balance');
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.json();
         const bal = data?.data?.balance ?? data?.balance ?? null;
         balanceEl.textContent = (typeof bal === 'number') ? formatMoney(bal) : (bal ? String(bal).slice(0, 40) : '--');
@@ -90,6 +100,10 @@ async function fetchBalance() {
     }
 }
 refreshBalanceBtn.addEventListener('click', fetchBalance);
+copyBalanceBtn && copyBalanceBtn.addEventListener('click', () => {
+    const txt = balanceEl.textContent || '';
+    navigator.clipboard?.writeText(txt).then(() => showToast('success', 'Sao chép số dư thành công')).catch(() => showToast('failed', 'Không thể sao chép'));
+});
 
 // VIETQR BANKS (populate dropdown)
 async function loadVietqrBanks() {
@@ -102,31 +116,30 @@ async function loadVietqrBanks() {
         }
         const j = await r.json();
         vietqrBanks = j?.data ?? [];
-        // we don't render everything at once; dropdown will show filtered results
     } catch (err) {
         console.error('vietqr fetch error', err);
     }
 }
 
-// open dropdown with filtered results
+// show dropdown with filtered list
 function showBankDropdown(filtered) {
     if (!filtered || !filtered.length) {
-        bankDropdownEl.innerHTML = `<div class="bank-dropdown"><div class="list"><div class="bank-item muted" style="padding:12px">Không tìm thấy</div></div></div>`;
+        bankDropdownEl.innerHTML = `<div class="list"><div class="bank-item muted" style="padding:12px">Không tìm thấy</div></div>`;
     } else {
-        const slice = filtered.slice(0, 30); // avoid too many
-        bankDropdownEl.innerHTML = `<div class="bank-dropdown"><div class="list">${slice.map(b => {
+        const slice = filtered.slice(0, 30);
+        bankDropdownEl.innerHTML = `<div class="list">${slice.map(b => {
             const binStr = Array.isArray(b.bins) ? b.bins.slice(0, 3).join(', ') : (b.bins || '-');
-            const logo = b.logo ? `<img src="${b.logo}" alt="${b.short_name}"/>` : `<div style="width:36px;height:24px;border-radius:6px;background:#f0f4f5"></div>`;
-            return `<div class="bank-item" data-bin="${Array.isArray(b.bins) ? b.bins[0] : (b.bins || '')}" data-name="${b.short_name}" data-logo="${b.logo ?? ''}">
+            const logo = b.logo ? `<img src="${b.logo}" alt="${escapeHtml(b.short_name)}"/>` : `<div style="width:36px;height:24px;border-radius:6px;background:#f0f4f5"></div>`;
+            const bin0 = Array.isArray(b.bins) ? b.bins[0] : (b.bins || '');
+            return `<div class="bank-item" data-bin="${bin0}" data-name="${escapeHtml(b.short_name)}" data-logo="${b.logo ?? ''}">
         ${logo}
-        <div class="meta"><div class="name">${b.short_name}</div><div class="sub">BIN: ${binStr}</div></div>
+        <div class="meta"><div class="name">${escapeHtml(b.short_name)}</div><div class="sub">BIN: ${binStr}</div></div>
       </div>`;
-        }).join('')}</div></div>`;
+        }).join('')}</div>`;
     }
     bankDropdownEl.classList.remove('hidden');
     bankDropdownVisible = true;
 
-    // attach click events
     bankDropdownEl.querySelectorAll('.bank-item').forEach(node => {
         node.addEventListener('click', () => {
             const bin = node.dataset.bin || '';
@@ -134,7 +147,7 @@ function showBankDropdown(filtered) {
             const logo = node.dataset.logo || '';
             toBinEl.value = bin;
             bankSearchEl.value = name;
-            selectedBankEl.innerHTML = logo ? `<img src="${logo}" alt="${name}"><div style="font-weight:700">${name}</div>` : `<div style="font-weight:700">${name}</div>`;
+            selectedBankEl.innerHTML = logo ? `<img src="${logo}" alt="${escapeHtml(name)}"><div style="font-weight:700">${escapeHtml(name)}</div>` : `<div style="font-weight:700">${escapeHtml(name)}</div>`;
             selectedBankEl.classList.remove('hidden');
             bankDropdownEl.classList.add('hidden');
             bankDropdownVisible = false;
@@ -164,21 +177,23 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// PAYOUT form submit
+// PAYOUT form
 payoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     resultEl.textContent = 'Đang gửi lệnh...';
+
     const body = {
-        referenceId: referenceIdEl.value.trim(),
+        referenceId: (referenceIdHidden.value || '').trim(),
         amount: Number(amountEl.value),
         description: descriptionEl.value || "",
-        toBin: toBinEl.value.trim(),
-        toAccountNumber: accountEl.value.trim(),
+        toBin: (toBinEl.value || '').trim(),
+        toAccountNumber: (accountEl.value || '').trim(),
         category: categoryEl.value ? [categoryEl.value.trim()] : []
     };
 
     if (!body.referenceId || !body.amount || !body.toBin || !body.toAccountNumber) {
         resultEl.textContent = 'Vui lòng điền đầy đủ referenceId, amount, toBin và toAccountNumber';
+        showToast('failed', 'Thiếu trường bắt buộc', 3500);
         return;
     }
 
@@ -194,9 +209,12 @@ payoutForm.addEventListener('submit', async (e) => {
             resultEl.textContent = JSON.stringify(data, null, 2);
             return;
         }
+
         const payosResponse = data?.payosResponse ?? data;
         const code = payosResponse?.code ?? payosResponse?.status ?? '';
-        const isSuccess = (String(code) === '00') || (payosResponse?.data && payosResponse.data?.transactions && payosResponse.data.transactions.some(t => t.state === 'SUCCEEDED')) || (payosResponse?.data?.approvalState === 'COMPLETED');
+        const isSuccess = (String(code) === '00') ||
+            (payosResponse?.data && payosResponse.data?.transactions && payosResponse.data.transactions.some(t => t.state === 'SUCCEEDED')) ||
+            (payosResponse?.data?.approvalState === 'COMPLETED');
 
         if (isSuccess) {
             showToast('success', 'Chuyển tiền thành công', 6000);
@@ -208,6 +226,7 @@ payoutForm.addEventListener('submit', async (e) => {
             showToast('failed', `Không thành công: ${desc}`, 6000);
             resultEl.textContent = JSON.stringify(payosResponse, null, 2);
         }
+
     } catch (err) {
         console.error(err);
         showToast('failed', 'Lỗi kết nối khi gửi lệnh', 6000);
@@ -219,20 +238,20 @@ function renderResultSuccess(payosData) {
     const data = payosData?.data ?? payosData;
     const txs = Array.isArray(data?.transactions) ? data.transactions : [];
     let html = `<div><span class="status success">Đã chuyển thành công</span></div>`;
-    html += `<div style="margin-top:10px;color:#6b7280">Mã lô: <strong>${data?.id ?? '-'}</strong></div>`;
+    html += `<div style="margin-top:10px;color:#6b7280">Mã lô: <strong>${escapeHtml(data?.id ?? '-')}</strong></div>`;
     if (txs.length) {
         const t = txs[0];
         html += `<div class="tx-details">
       <div class="tx-row"><div class="k">Số tiền</div><div class="v">${formatMoney(t.amount)}</div></div>
-      <div class="tx-row"><div class="k">Người nhận</div><div class="v">${t.toAccountName ?? '-'}</div></div>
-      <div class="tx-row"><div class="k">Số tài khoản</div><div class="v">${t.toAccountNumber ?? '-'}</div></div>
-      <div class="tx-row"><div class="k">Ngân hàng (BIN)</div><div class="v">${t.toBin ?? '-'}</div></div>
-      <div class="tx-row"><div class="k">Mô tả</div><div class="v">${t.description ?? '-'}</div></div>
-      <div class="tx-row"><div class="k">Thời gian</div><div class="v">${t.transactionDatetime ?? data?.createdAt ?? '-'}</div></div>
-      <div class="tx-row"><div class="k">Trạng thái</div><div class="v">${t.state ?? '-'}</div></div>
+      <div class="tx-row"><div class="k">Người nhận</div><div class="v">${escapeHtml(t.toAccountName ?? '-')}</div></div>
+      <div class="tx-row"><div class="k">Số tài khoản</div><div class="v">${escapeHtml(t.toAccountNumber ?? '-')}</div></div>
+      <div class="tx-row"><div class="k">Ngân hàng (BIN)</div><div class="v">${escapeHtml(t.toBin ?? '-')}</div></div>
+      <div class="tx-row"><div class="k">Mô tả</div><div class="v">${escapeHtml(t.description ?? '-')}</div></div>
+      <div class="tx-row"><div class="k">Thời gian</div><div class="v">${escapeHtml(t.transactionDatetime ?? data?.createdAt ?? '-')}</div></div>
+      <div class="tx-row"><div class="k">Trạng thái</div><div class="v">${escapeHtml(t.state ?? '-')}</div></div>
     </div>`;
     } else {
-        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        html += `<pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
     }
     resultEl.innerHTML = html;
 }
@@ -246,6 +265,7 @@ async function loadHistory(page = 1, search = "") {
         params.set('limit', histLimit);
         if (search) params.set('q', search);
         const r = await fetch(`/api/history?${params.toString()}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.json();
 
         let items = [];
@@ -259,12 +279,11 @@ async function loadHistory(page = 1, search = "") {
         if (!items || !items.length) {
             historyBody.innerHTML = `<tr><td colspan="7" class="muted">Không có dữ liệu</td></tr>`;
             historyPageInfo.textContent = `Trang ${page} / 1`;
-            histTotalPages = 1;
-            histPage = 1;
+            histTotalPages = 1; histPage = 1;
             return;
         }
 
-        const total = data?.data?.total ?? data?.total ?? (items.length);
+        const total = data?.data?.total ?? data?.total ?? items.length;
         histTotalPages = Math.max(1, Math.ceil((total || items.length) / histLimit));
         histPage = page;
         historyPageInfo.textContent = `Trang ${histPage} / ${histTotalPages}`;
@@ -279,15 +298,16 @@ async function loadHistory(page = 1, search = "") {
             const time = txn?.transactionDatetime ?? it?.createdAt ?? '-';
             const status = txn?.state ?? it?.approvalState ?? it?.status ?? '-';
             return `<tr>
-        <td>${batchId}</td>
-        <td>${reference}</td>
-        <td>${(typeof amount === 'number') ? formatMoney(amount) : amount}</td>
-        <td>${recipient}</td>
-        <td>${bin}</td>
-        <td>${time}</td>
-        <td>${status}</td>
+        <td>${escapeHtml(batchId)}</td>
+        <td>${escapeHtml(reference)}</td>
+        <td>${(typeof amount === 'number') ? formatMoney(amount) : escapeHtml(String(amount))}</td>
+        <td>${escapeHtml(recipient)}</td>
+        <td>${escapeHtml(bin)}</td>
+        <td>${escapeHtml(time)}</td>
+        <td>${escapeHtml(status)}</td>
       </tr>`;
         }).join('');
+
     } catch (err) {
         console.error(err);
         historyBody.innerHTML = `<tr><td colspan="7" class="muted">Lỗi tải lịch sử</td></tr>`;
@@ -299,9 +319,41 @@ historySearch.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadHi
 historyPrev.addEventListener('click', () => { if (histPage > 1) loadHistory(histPage - 1, historySearch.value.trim()); });
 historyNext.addEventListener('click', () => { if (histPage < histTotalPages) loadHistory(histPage + 1, historySearch.value.trim()); });
 
-// init
-referenceIdEl.value = `payout_${Date.now()}`;
-loadVietqrBanks().then(() => {
-    // optionally prefill bankSearch with first few suggestions
+// Clear form
+clearBtn.addEventListener('click', () => {
+    amountEl.value = '';
+    categoryEl.value = '';
+    descriptionEl.value = '';
+    bankSearchEl.value = '';
+    toBinEl.value = '';
+    accountEl.value = '';
+    selectedBankEl.classList.add('hidden');
+    resultEl.textContent = 'Chưa có hành động';
 });
+
+// copy reference and balance
+copyRefBtn.addEventListener('click', () => {
+    const txt = referenceIdHidden.value || '';
+    navigator.clipboard?.writeText(txt).then(() => showToast('success', 'Sao chép Reference ID thành công')).catch(() => showToast('failed', 'Không thể sao chép'));
+});
+
+// small helper: escape html
+function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"'`]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[m]));
+}
+
+// Init: set referenceId as hidden & displayed (readonly style)
+function initReference() {
+    const val = `payout_${Date.now()}`;
+    referenceIdHidden.value = val;             // hidden input — will be submitted
+    referenceDisplay.textContent = val;       // visible but not editable
+}
+
+// Init app
+initReference();
+loadVietqrBanks().then(() => {/* optionally prefill suggestions */ });
 fetchBalance();
+
+// OPTIONAL: auto-refresh balance every 2 minutes (safe)
+setInterval(fetchBalance, 120000);
